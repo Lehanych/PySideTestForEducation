@@ -470,7 +470,7 @@ class QuestStorage:
         data = {
             'version': '0.1.a',
             'title' : 'MyTest',
-            'question': [q.to_dict() for q in self.questions]
+            'questions': [q.to_dict() for q in self.questions]
         }
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
