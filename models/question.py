@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+@dataclass
 class Quest:
     def __init__(self, id_category:int, id: int, title:str, question_html: str, answer_array: list[str], qtype: str):
         self.id = id
@@ -28,3 +31,4 @@ class Quest:
             question_html=data["question_html"],
             answer_array=data["answer_array_html"]
         )
+
