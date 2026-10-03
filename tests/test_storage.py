@@ -1,14 +1,20 @@
 from storage.question_storage import QuestStorage
-import json
+from models.question import Quest
 
-# load questions
-file_q = 'test.json'
+from tests import template_quest
 
-with open(file_q, 'r', encoding='utf-8') as f:
-    data = json.load(f)
+questions = template_quest.questions
 
 storage = QuestStorage()
 
-def add_quest(storage):
-    question =
-    storage.questions = data['questions']
+def test_add_quest():
+    storage.add_empty_quest()
+    for quest in questions:
+        storage.add_quest(quest)
+
+def test_remove_quest():
+    deleted_quest = storage.get_quest_by_id(3)
+    storage.remove_question(3)
+
+    assert deleted_quest in questions
+    assert deleted_quest not in storage.questions

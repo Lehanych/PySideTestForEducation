@@ -6,7 +6,7 @@ class QuestStorage:
         self.current_path = None
         self.id = 1
 
-    def add_quest2(self, question: Quest):
+    def add_quest(self, question: Quest):
         question.id = self.id
         self.questions.append(question)
         self.id += 1
