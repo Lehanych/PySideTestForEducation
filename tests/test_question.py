@@ -1,5 +1,4 @@
-from models.question import Quest
-from tests import template_quest
+from tests.templates import template_quest
 
 questions = template_quest.questions
 
@@ -18,5 +17,5 @@ def test_question_placeholder():
     assert one_quest.position == one_question_dict['position']
     assert one_quest.title == one_question_dict['title']
     assert one_quest.qtype == one_question_dict['qtype']
-    assert one_quest.question_html == one_question_dict['question_html']
-    assert one_quest.answer_array_html == one_question_dict['answer_array_html']
+    assert one_quest.question_str == one_question_dict['question_str']
+    assert one_quest.answers == one_question_dict['answers']

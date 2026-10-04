@@ -1,22 +1,22 @@
-from models.question import Quest
+from models.question import Question
 
 class QuestStorage:
     def __init__(self):
-        self.questions: list[Quest] = []
+        self.questions: list[Question] = []
         self.current_path = None
         self.id = 1
 
-    def add_quest(self, question: Quest):
+    def add_quest(self, question: Question):
         question.id = self.id
         self.questions.append(question)
         self.id += 1
-        return Quest
+        return Question
 
     def add_empty_quest(self, title: str = "Новый вопрос", test_position = 0):
-        question = Quest(test_position, self.id, title, "", ["", "", "", ""], "Неопределенный")
+        question = Question(test_position, title, "", ["", "", "", ""], "Неопределенный", id = self.id)
         self.id += 1
         self.questions.append(question)
-        return Quest
+        return Question
 
     def get_quest_by_id(self, id_quest: int):
         for quest in self.questions:

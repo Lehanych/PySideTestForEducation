@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
 @dataclass
-class Quest:
+class Question:
     position : int
     title : str
-    question_html : str
-    answer_array_html : list[str]
+    question_str : str
+    answers : list[str]
     qtype : str
     id: int = 0
 
@@ -15,8 +15,8 @@ class Quest:
             "id": self.id,
             "title": self.title,
             "qtype": self.qtype,
-            "question_html": self.question_html,
-            "answer_array_html": self.answer_array_html
+            "question_str": self.question_str,
+            "answers": self.answers
         }
 
     # переход обратно к экземпляру класса из словаря
@@ -27,7 +27,7 @@ class Quest:
             id=data["id"],
             title = data["title"],
             qtype = data["qtype"],
-            question_html=data["question_html"],
-            answer_array_html=data["answer_array_html"]
+            question_str=data["question_str"],
+            answers=data["answers"]
         )
 

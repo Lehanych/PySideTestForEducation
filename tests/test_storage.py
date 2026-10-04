@@ -1,7 +1,6 @@
 from storage.question_storage import QuestStorage
-from models.question import Quest
 
-from tests import template_quest
+from tests.templates import template_quest
 
 questions = template_quest.questions
 

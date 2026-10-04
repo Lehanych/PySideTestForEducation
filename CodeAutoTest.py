@@ -153,11 +153,11 @@ class MainWindow(QMainWindow):
             title_var = f"Вариант {i_var}"
             # form inner 1 var
             inner_block_quest_answers = ""
-            for i_category in range(len(data[i_var])):
+            for i_pos in range(len(data[i_var])):
                 block_answers = ""
-                for i_answ in range(len(data[i_var][i_category]["answer"])):
+                for i_answ in range(len(data[i_var][i_pos]["answer"])):
                     html_parser = QTextEditExtractor()
-                    html_parser.feed(data[i_var][i_category]["answer"][i_answ])
+                    html_parser.feed(data[i_var][i_pos]["answer"][i_answ])
                     parser_answer = html_parser.get_body()
                     block_answer = f"""
                     <div class = one-answer>
@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
                     block_answers += block_answer
                 inner_block_quest_answer = f"""
                     <div class = "block-quest">
-                        {data[i_var][i_category]["question"]}
+                        {data[i_var][i_pos]["question"]}
                     </div>
                     <div class = "block-answer">
                         {block_answers}
@@ -307,14 +307,14 @@ class MainWindow(QMainWindow):
             self.WorkSpaceQuest.setEnabled(True)
         if prev_item:
                 if -1 == tree.indexOfTopLevelItem(prev_item):
-                    # load current data to QStorage
+                    # load current templates to QStorage
                     prev_quest = self.QStorage.get_question(prev_item.id_q)
                     prev_quest.question_html = self.WorkSpaceQuest.toHtml()
                     prev_quest.answer_array_html = []
                     for tab in self.WorkSpaceAnswer.tabs:
                         prev_quest.answer_array_html.append(tab.toHtml())
 
-        # load data from QStorage to WorkAreas
+        # load templates from QStorage to WorkAreas
         if item and -1 == tree.indexOfTopLevelItem(item):
             self.WorkSpaceQuest.clear()
             cur_quest = self.QStorage.get_question(item.id_q)
@@ -410,9 +410,9 @@ class QuestStorage:
         self.questions: list[Quest] = []
         self.current_path = None
 
-    def add_quest(self, title: str = "Новый вопрос", id_category = 0) -> Quest:
+    def add_quest(self, title: str = "Новый вопрос", position = 0) -> Quest:
         new_id = len(self.questions)
-        question = Quest(id_category, new_id, title,"", ["","","",""], "Неопределенный")
+        question = Quest(position, new_id, title,"", ["","","",""], "Неопределенный")
         self.questions.append(question)
         return question
 
@@ -445,21 +445,21 @@ class QuestStorage:
     def create_test_many_v_list(self, n_var=1) -> list[list[dict[str,str]]]:
         list_quest: list[list[Quest]] = []
         for quest in self.questions:
-            id_category = quest.id_category
-            if id_category != 0:
-                while len(list_quest) <= id_category:
+            position = quest.position
+            if position != 0:
+                while len(list_quest) <= position:
                     list_quest.append([])
-                list_quest[id_category].append(quest)
+                list_quest[position].append(quest)
         # category with no name
         list_quest[0] = []
-        for i_category in range(1,len(list_quest)):
-                random.shuffle(list_quest[i_category])
+        for i_pos in range(1,len(list_quest)):
+                random.shuffle(list_quest[i_pos])
         test = []
         for i_var in range(n_var):
             quest_one_var = []
-            for i_category in range(1,len(list_quest)):
-                quest_html = list_quest[i_category][i_var % len(list_quest[i_category])].question_html
-                answer_html = list_quest[i_category][i_var % len(list_quest[i_category])].answer_array_html
+            for i_pos in range(1,len(list_quest)):
+                quest_html = list_quest[i_pos][i_var % len(list_quest[i_pos])].question_html
+                answer_html = list_quest[i_pos][i_var % len(list_quest[i_pos])].answer_array_html
                 random.shuffle(answer_html)
                 one_quest = {"question" : quest_html, "answer" : answer_html}
                 quest_one_var.append(one_quest)
@@ -495,7 +495,7 @@ class QTreeQA(QTreeWidget):
         self.setDropIndicatorShown(True)
         self.setSortingEnabled(False)
         self.id_quest_next = 1
-        self.id_category_next = 1
+        self.position_next = 1
         self.StorageQ = StorageQ
         # enable editing of items
         self.setEditTriggers(QAbstractItemView.DoubleClicked |
@@ -511,7 +511,7 @@ class QTreeQA(QTreeWidget):
         super().dropEvent(event)
         # обновление id
         if dragged_items[0].parent() is None:
-            self.update_id_categorynName()
+            self.update_positionnName()
         else:
             self.update_idAndName_quest(dragged_items[0].parent())
             self.update_idAndName_quest(parent_begin)
@@ -572,12 +572,12 @@ class QTreeQA(QTreeWidget):
         return False
 
     def add_category_toTree(self):
-        id_category_next = self.id_category_next
-        item = QTreeItem(tree=None, id_q=id_category_next)
+        position_next = self.position_next
+        item = QTreeItem(tree=None, id_q=position_next)
         self.addTopLevelItem(item)
-        self.id_category_next += 1
+        self.position_next += 1
         # переименовываем по номерам
-        item.setText(0, f"Категория {id_category_next}")
+        item.setText(0, f"Категория {position_next}")
         self.clearSelection()
         self.setCurrentItem(item)
         item.setSelected(True)
@@ -612,7 +612,7 @@ class QTreeQA(QTreeWidget):
             # выбрать следующий элемент
             self.currentItem().setSelected(True)
             # обновление id и имена
-            self.update_id_categorynName()
+            self.update_positionnName()
 
     def add_quest_toTree_and_QStorage(self):
         curItem = self.currentItem()
@@ -626,8 +626,8 @@ class QTreeQA(QTreeWidget):
         else:
             curItem.parent().addChild(item)
         self.blockSignals(False)
-        id_category = item.parent().id_q
-        quest = self.StorageQ.add_quest(id_category=id_category)
+        position = item.parent().id_q
+        quest = self.StorageQ.add_quest(position=position)
         item.id_q = quest.id
         item.question = quest
         # раскрытие после добавления
@@ -661,10 +661,10 @@ class QTreeQA(QTreeWidget):
             if not parent.child(i_item).title_is_modified:
                 parent.child(i_item).setText(0, f"Вопрос {i_item+1}")
             parent.child(i_item).id_q = parent.child(i_item).question.id
-            parent.child(i_item).question.id_category = parent.id_q
+            parent.child(i_item).question.position = parent.id_q
 
 
-    def update_id_categorynName(self):
+    def update_positionnName(self):
         if self.topLevelItem(0):
             NzeroCategory = self.topLevelItem(0).id_q
         else:
@@ -676,7 +676,7 @@ class QTreeQA(QTreeWidget):
             if not self.topLevelItem(i).title_is_modified:
                 id_top_level = self.topLevelItem(i).id_q
                 self.topLevelItem(i).setText(0, f"Категория {id_top_level}")
-        self.id_category_next = self.topLevelItemCount()
+        self.position_next = self.topLevelItemCount()
 
 
 # Class of element of tree with id
