@@ -5,7 +5,10 @@ import os
 # from jinja2 import Template
 import random
 from html.parser import HTMLParser
-
+from models.question import Question
+from storage.question_storage import QuestStorage
+from repositories.quest_file_repository import QuestSaveLoadJSON
+from services.generator_of_test import GeneratorTestCreator
 
 from PySide6 import QtGui, QtGui
 from PySide6.QtCore import Qt, QCoreApplication
@@ -23,7 +26,8 @@ from PySide6.QtWidgets import \
     QGridLayout, QStatusBar, QToolBar, \
     QAbstractItemView
 
-from models.question import Quest
+question_save_loader = QuestSaveLoadJSON()
+generator_of_test = GeneratorTestCreator()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -73,7 +77,7 @@ class MainWindow(QMainWindow):
         self.file_menu = self.menuBar().addMenu("File")
         # save test as
         self.action_savetest_json = QAction(self)
-        self.action_savetest_json.triggered.connect(self.save_test_json)
+        self.action_savetest_json.triggered.connect(question_save_loader.save_test_json)
         self.action_savetest_json.setObjectName("Save as JSON")
         self.save_as = self.file_menu.addMenu("Save as...")
         self.save_as.addAction(self.action_savetest_json)
@@ -137,17 +141,11 @@ class MainWindow(QMainWindow):
         self.listViewContent.currentItemChanged.connect(self.item_changed)
         # when titla of tree was change
 
-    def save_test_json(self):
-        filePath, _ = QFileDialog.getSaveFileName(
-            self, "Сохранить JSON", "", "JSON файлы (*.json)"
-        )
-        if filePath:
-            self.QStorage.save_to_file(filePath)
 
     # Task: проработать вывод html теста, рассмотреть возможность интерактивного выполнения
     def save_test_html(self):
         n_var = 3
-        data = self.QStorage.create_test_many_v_list(n_var=n_var)
+        data = generator_of_test.create_test_many_v_list(n_var=n_var)
         quest_n_answer_html_one_blocks = ""
         for i_var in range(n_var):
             title_var = f"Вариант {i_var}"
@@ -405,88 +403,8 @@ class QTextEditExtractor(HTMLParser):
 # класс для формирования вопроса + ответы
 
 
-class QuestStorage:
-    def __init__(self):
-        self.questions: list[Quest] = []
-        self.current_path = None
-
-    def add_quest(self, title: str = "Новый вопрос", position = 0) -> Quest:
-        new_id = len(self.questions)
-        question = Quest(position, new_id, title,"", ["","","",""], "Неопределенный")
-        self.questions.append(question)
-        return question
-
-    def remove_question(self,index: int):
-        if 0 <= index < len(self.questions):
-            self.questions.pop(index)
-            # update id in QTree!
-            for i, q in enumerate(self.questions):
-                q.id = i
-            return True
-        return False
-
-    def get_question(self,index: int):
-        if 0 <= index < len(self.questions):
-            return self.questions[index]
-        return None
-
-    def get_all_questions(self):
-        return self.questions.copy()
-
-    def get_all_questions_from_category(self):
-        pass
-
-    def sort_questions_by_category(self):
-        pass
-
-    def create_test_one_v(self):
-        pass
-
-    def create_test_many_v_list(self, n_var=1) -> list[list[dict[str,str]]]:
-        list_quest: list[list[Quest]] = []
-        for quest in self.questions:
-            position = quest.position
-            if position != 0:
-                while len(list_quest) <= position:
-                    list_quest.append([])
-                list_quest[position].append(quest)
-        # category with no name
-        list_quest[0] = []
-        for i_pos in range(1,len(list_quest)):
-                random.shuffle(list_quest[i_pos])
-        test = []
-        for i_var in range(n_var):
-            quest_one_var = []
-            for i_pos in range(1,len(list_quest)):
-                quest_html = list_quest[i_pos][i_var % len(list_quest[i_pos])].question_html
-                answer_html = list_quest[i_pos][i_var % len(list_quest[i_pos])].answer_array_html
-                random.shuffle(answer_html)
-                one_quest = {"question" : quest_html, "answer" : answer_html}
-                quest_one_var.append(one_quest)
-            test.append(quest_one_var)
-        return test
-
-    def save_to_file(self,file_path: str):
-        data = {
-            'version': '0.1.a',
-            'title' : 'MyTest',
-            'questions': [q.to_dict() for q in self.questions]
-        }
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        self.current_path = file_path
-
-    def load_from_file(self, file_path: str):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        self.questions.clear()
-        for q_data in data.get('questions',[]):
-            question = Quest.from_dict(q_data)
-            self.questions.append(question)
-        self.current_path = file_path
-
 class QTreeQA(QTreeWidget):
-    def __init__(self, StorageQ:QuestStorage, parent=None):
+    def __init__(self, storage_q:QuestStorage, parent=None):
         super().__init__(parent)
         # setup DragAndDrop
         self.setDragDropMode(QAbstractItemView.InternalMove)
@@ -496,7 +414,7 @@ class QTreeQA(QTreeWidget):
         self.setSortingEnabled(False)
         self.id_quest_next = 1
         self.position_next = 1
-        self.StorageQ = StorageQ
+        self.StorageQ = storage_q
         # enable editing of items
         self.setEditTriggers(QAbstractItemView.DoubleClicked |
                              QAbstractItemView.EditKeyPressed)
@@ -515,8 +433,6 @@ class QTreeQA(QTreeWidget):
         else:
             self.update_idAndName_quest(dragged_items[0].parent())
             self.update_idAndName_quest(parent_begin)
-
-
 
     def dragMoveEvent(self, event):
         super().dragMoveEvent(event)
@@ -627,7 +543,7 @@ class QTreeQA(QTreeWidget):
             curItem.parent().addChild(item)
         self.blockSignals(False)
         position = item.parent().id_q
-        quest = self.StorageQ.add_quest(position=position)
+        quest = self.StorageQ.add_empty_quest(test_position=position)
         item.id_q = quest.id
         item.question = quest
         # раскрытие после добавления

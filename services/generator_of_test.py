@@ -19,24 +19,35 @@ class GeneratorTestCreator:
                 while len(list_quest) <= position:
                     list_quest.append([])
                 list_quest[position].append(quest)
+
         # category with no name
         list_quest[0] = []
         for i_pos in range(1,len(list_quest)):
-                random.shuffle(list_quest[i_pos])
+                if lsit_quest[i_pos]:
+                    random.shuffle(list_quest[i_pos])
+
         shuffled_questions = []
         for i_var in range(n_var):
             quest_one_var = []
             for i_pos in range(1,len(list_quest)):
-                one_question = list_quest[i_pos][i_var % len(list_quest[i_pos])]
+                pos_list = list_quest[i_pos]
+                if not pos_list:
+                    continue
+                one_question = pos_list[i_var % len(pos_list)]
 
                 qtype = one_question.qtype
                 question_str = one_question.question_str
-                answers = one_question.answers
 
+                answers = list(one_question.answers)
                 random.shuffle(answers)
 
-                one_quest = {'qtype': qtype,"question" : question_str, "answer" : answers}
+                one_quest = {
+                    'qtype': qtype,
+                    "question" : question_str, 
+                    "answer" : answers
+                }
                 quest_one_var.append(one_quest)
 
             shuffled_questions.append(quest_one_var)
+            
         return shuffled_questions
