@@ -1,38 +1,21 @@
-from models.question import Quest
-import json
+from tests.templates import template_quest
 
-
+questions = template_quest.questions
 
 def test_question_to_dict_and_back():
-    file_q = 'test.json'
-
-    with open(file_q, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    print(data)
-
-    questions_list = data['questions']
-    one_question_dict = questions_list[0]
-
-    # question = Quest(1, 2, "title","", ["","","",""], "Неопределенный")
-    question = Quest.from_dict(one_question_dict)
-    question2_dict = question.to_dict()
-    assert one_question_dict == question2_dict
+    one_quest = questions[0]
+    question_dict = one_quest.to_dict()
+    question2 = one_quest.from_dict(question_dict)
+    assert question2 == one_quest
 
 def test_question_placeholder():
-    file_q = 'test.json'
+    one_quest = questions[0]
 
-    with open(file_q, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    print(data)
+    one_question_dict = one_quest.to_dict()
 
-    questions_list = data['questions']
-    one_question_dict = questions_list[0]
-
-    question = Quest.from_dict(one_question_dict)
-
-    assert question.id == one_question_dict['id']
-    assert question.id_category == one_question_dict['id_category']
-    assert question.title == one_question_dict['title']
-    assert question.type == one_question_dict['type']
-    assert question.question_html == one_question_dict['question_html']
-    assert question.answer_array_html == one_question_dict['answer_array_html']
+    assert one_quest.id == one_question_dict['id']
+    assert one_quest.position == one_question_dict['position']
+    assert one_quest.title == one_question_dict['title']
+    assert one_quest.qtype == one_question_dict['qtype']
+    assert one_quest.question_str == one_question_dict['question_str']
+    assert one_quest.answers == one_question_dict['answers']
